@@ -17,9 +17,17 @@ class Browser(QtGui.QMainWindow):
 
         self.csi_thread = Client_Server_Interactive_Thread()
         self.connect(self.csi_thread, QtCore.SIGNAL("display_html(QString)"), self.display_html)
+        self.ui.txt_browser.setOpenExternalLinks(True)
+        self.connect(self.ui.txt_browser,
+                     QtCore.SIGNAL('anchorClicked(const QUrl &)'),
+                     self.anchorClickedHandler)
         self.csi_thread.start()
 
         self.ui.go_bttn.clicked.connect(self.get_url_txtbx)
+
+    def anchorClickedHandler(self):
+        self.ui.txt_browser.setSource(QtCore.QUrl("google.com"))
+        send_msg('link')
 
     # -----------------GET TEXT FROM URL TEXT BOX----------------- #
 
@@ -31,31 +39,41 @@ class Browser(QtGui.QMainWindow):
     # -----------------DISPLAY HTML TO BROWSER----------------- #
 
     def display_html(self, data):
-        self.ui.viewer_txt_bx.setText(data)
+        global html_data
+        html_data = data
+        temp_html_file = open('html_file.html', 'w')
+        temp_html_file.write(data)
+        temp_html_file.close()
+        #self.ui.viewer_txt_bx.setText(data)
+        self.ui.txt_browser.setText(data)
         self.parse_document(data)
 
 
     def highlight(self, str_html):
 
-        cursor = self.ui.viewer_txt_bx.textCursor()
+        cursor = self.ui.txt_browser.textCursor()
         # Setup the desired format for matches
         format = QtGui.QTextCharFormat()
+
+
         format.setBackground(QtGui.QBrush(QtGui.QColor("red")))
         # Setup the regex engine
         pattern = str_html
         regex = QtCore.QRegExp(pattern)
         # Process the displayed document
         pos = 0
-        index = regex.indexIn(self.ui.viewer_txt_bx.toPlainText(), pos)
+
+        index = regex.indexIn(self.ui.txt_browser.toPlainText(), pos)
+        temp_start_index = index
         while (index != -1):
             # Select the matched text and apply the desired format
             cursor.setPosition(index)
-            cursor.movePosition(QtGui.QTextCursor.EndOfWord, 1)
+            cursor.movePosition(QtGui.QTextCursor.EndOfLine, 1)
             cursor.mergeCharFormat(format)
             # Move to the next match
             pos = index + regex.matchedLength()
-            index = regex.indexIn(self.ui.viewer_txt_bx.toPlainText(), pos)
-            self.update()
+
+            index = regex.indexIn(self.ui.txt_browser.toPlainText(), pos)
 
     def parse_document(self, data):
 
@@ -68,20 +86,29 @@ class Browser(QtGui.QMainWindow):
             data_link = r_link.search(data_str_mark)
             data_mark_link = r_marknlink.search(data_str_mark)
 
+            # if data_mark_link:
+            #     str3 = data_mark_link.group(1)
+            #     str3_list = str3.split()
+            #     for pattern in str3_list:
+            #         self.highlight(pattern)
+            #
+            #
+            #     if data_link:
+            #         str2 = data_link.group(1)
+            #
+            # else:
+            #     data_str_mark_list = data_str_mark.split()
+            #     for pattern in data_str_mark_list:
+            #         self.highlight(pattern)
+
             if data_mark_link:
                 str3 = data_mark_link.group(1)
-                str3_list = str3.split()
-                for pattern in str3_list:
-                    self.highlight(pattern)
-
-
+                self.highlight(str3)
                 if data_link:
                     str2 = data_link.group(1)
-
             else:
-                data_str_mark_list = data_str_mark.split()
-                for pattern in data_str_mark_list:
-                    self.highlight(pattern)
+
+                self.highlight(data_str_mark)
 
 
 
@@ -104,7 +131,7 @@ def socket_create():
     global host
     global port
     global s
-    host = '192.168.2.227'
+    host = '192.168.43.148'
     port = 9977
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))

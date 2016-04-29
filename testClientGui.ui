@@ -37,13 +37,13 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextEdit" name="viewer_txt_bx">
+   <widget class="QTextBrowser" name="txt_browser">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>40</y>
       <width>761</width>
-      <height>501</height>
+      <height>511</height>
      </rect>
     </property>
    </widget>

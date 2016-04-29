@@ -91,8 +91,13 @@ def send_file(conn, msg):
                 file_content += line
             conn.send(str.encode(file_content, 'utf-8'))
             f.close()
-    elif msg == 'google.com':
-        conn.send(str.encode('google.com', 'utf-8'))
+    elif msg == 'link':
+        with open('clicked_link.html') as f:
+            for line in f:
+                file_content += line
+            conn.send(str.encode(file_content, 'utf-8'))
+            f.close()
+        print(msg)
     elif msg != '':
         msg_list = msg.split(' ')
         query = msg_list[0]
@@ -119,6 +124,8 @@ def listening_for_msgs(conn):
             elif rcv_msg_str == "google.com":
                 send_file(conn, 'google.com')
                 print(rcv_msg_str)
+            elif rcv_msg_str == 'link':
+                send_file(conn, 'link')
             elif rcv_msg_str != "":
                 send_file(conn, rcv_msg_str)
             else:
