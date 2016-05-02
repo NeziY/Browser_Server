@@ -41,6 +41,7 @@ class Browser(QtGui.QMainWindow):
         self.parse_document(data)
 
     # -----------------HIGHLIGHT FOR <MARK> TAG----------------- #
+    
     def highlight(self, str_html):
 
         cursor = self.ui.txt_browser.textCursor()
@@ -61,6 +62,7 @@ class Browser(QtGui.QMainWindow):
 
 
     # -----------------PARSE HTML CODE----------------- #
+    
     def parse_document(self, data):
         global data_link_str
         data_link_str = ''
@@ -74,20 +76,6 @@ class Browser(QtGui.QMainWindow):
             data_link = r_link.search(data_str_mark)
             data_mark_link = r_marknlink.search(data_str_mark)
 
-            # if data_mark_link:
-            #     str3 = data_mark_link.group(1)
-            #     str3_list = str3.split()
-            #     for pattern in str3_list:
-            #         self.highlight(pattern)
-            #
-            #
-            #     if data_link:
-            #         str2 = data_link.group(1)
-            #
-            # else:
-            #     data_str_mark_list = data_str_mark.split()
-            #     for pattern in data_str_mark_list:
-            #         self.highlight(pattern)
 
             if data_mark_link:
                 str3 = data_mark_link.group(1)
@@ -97,10 +85,6 @@ class Browser(QtGui.QMainWindow):
 
             elif data_str_mark:
                 self.highlight(data_str_mark)
-
-
-
-
 
 # -----------------QT THREAD TO SEND MSG FROM SERVER TO GUI----------------- #
 
@@ -115,7 +99,6 @@ class Client_Server_Interactive_Thread(QtCore.QThread):
             self.emit(QtCore.SIGNAL('display_html(QString)'), msg)
 
 # -----------------CREATE SOCKET----------------- #
-
 
 def socket_create():
     global host
