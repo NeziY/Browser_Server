@@ -1,34 +1,31 @@
 from PyQt4 import QtGui, QtCore, uic
-from PyQt4.QtWebKit import QWebView
 import socket
 import sys  # We need sys so that we can pass argv to QApplication
-from html.parser import HTMLParser
-from urllib import parse
 import re
+
+# -----------------BROWSER GUI----------------- #
 
 class Browser(QtGui.QMainWindow):
     def __init__(self):
-        # Explaining super is out of the scope of this article
-        # So please google it if you're not familar with it
-        # Simple reason why we use it here is that it allows us to
-        # access variables, methods etc in the design.py file
         super(Browser, self).__init__()
         self.ui = uic.loadUi('testClientGui.ui')
 
         self.csi_thread = Client_Server_Interactive_Thread()
         self.connect(self.csi_thread, QtCore.SIGNAL("display_html(QString)"), self.display_html)
-        self.ui.txt_browser.setOpenExternalLinks(True)
+
         self.connect(self.ui.txt_browser,
                      QtCore.SIGNAL('anchorClicked(const QUrl &)'),
                      self.anchorClickedHandler)
+
         self.csi_thread.start()
 
         self.ui.go_bttn.clicked.connect(self.get_url_txtbx)
 
-    def anchorClickedHandler(self):
-        self.ui.txt_browser.setSource(QtCore.QUrl("google.com"))
-        send_msg('link')
+    # -----------------CLICK EVENT FOR ANCHOR (HTML LINK)----------------- #
 
+    def anchorClickedHandler(self):
+        # self.ui.txt_browser.setSource(QtCore.QUrl("html_file.html"))
+        send_msg(data_link_str)
     # -----------------GET TEXT FROM URL TEXT BOX----------------- #
 
     def get_url_txtbx(self):
@@ -39,43 +36,34 @@ class Browser(QtGui.QMainWindow):
     # -----------------DISPLAY HTML TO BROWSER----------------- #
 
     def display_html(self, data):
-        global html_data
-        html_data = data
-        temp_html_file = open('html_file.html', 'w')
-        temp_html_file.write(data)
-        temp_html_file.close()
         #self.ui.viewer_txt_bx.setText(data)
         self.ui.txt_browser.setText(data)
         self.parse_document(data)
 
-
+    # -----------------HIGHLIGHT FOR <MARK> TAG----------------- #
     def highlight(self, str_html):
 
         cursor = self.ui.txt_browser.textCursor()
         # Setup the desired format for matches
         format = QtGui.QTextCharFormat()
-
-
         format.setBackground(QtGui.QBrush(QtGui.QColor("red")))
         # Setup the regex engine
         pattern = str_html
         regex = QtCore.QRegExp(pattern)
         # Process the displayed document
         pos = 0
-
         index = regex.indexIn(self.ui.txt_browser.toPlainText(), pos)
-        temp_start_index = index
-        while (index != -1):
-            # Select the matched text and apply the desired format
+        # Select the matched text and apply the desired
+        if index != -1:
             cursor.setPosition(index)
             cursor.movePosition(QtGui.QTextCursor.EndOfLine, 1)
             cursor.mergeCharFormat(format)
-            # Move to the next match
-            pos = index + regex.matchedLength()
 
-            index = regex.indexIn(self.ui.txt_browser.toPlainText(), pos)
 
+    # -----------------PARSE HTML CODE----------------- #
     def parse_document(self, data):
+        global data_link_str
+        data_link_str = ''
 
         r_mark = re.compile('<mark>(.*?)</mark>')
         r_link = re.compile('<a href="(.*)">')
@@ -105,10 +93,12 @@ class Browser(QtGui.QMainWindow):
                 str3 = data_mark_link.group(1)
                 self.highlight(str3)
                 if data_link:
-                    str2 = data_link.group(1)
-            else:
+                    data_link_str = data_link.group(1)
 
+            elif data_str_mark:
                 self.highlight(data_str_mark)
+
+
 
 
 
@@ -131,31 +121,23 @@ def socket_create():
     global host
     global port
     global s
-    host = '192.168.43.148'
+    host = '192.168.204.99'
     port = 9977
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
 
 # -----------------LISTENS TO INCOMING DATA FROM SERVER----------------- #
 
-
 def listen_for_msg():
-    data_str = ''
     data = s.recv(1024)
     data_str = str(data[:].decode("utf-8"))
-    data_list = data_str.split("\n")
     return data_str
 
-
-
 # -----------------SEND REQUEST FROM USER TO SERVER----------------- #
-
 
 def send_msg(msg):
 
         if msg == "server":
-            s.send(str.encode(msg, "utf-8"))
-        elif msg == "google.com":
             s.send(str.encode(msg, "utf-8"))
         elif msg != "":
             s.send(str.encode(msg, "utf-8"))
@@ -163,7 +145,6 @@ def send_msg(msg):
             s.close()
 
 # -----------------GUI MAIN FUNCTION----------------- #
-
 
 app = QtGui.QApplication(sys.argv)  # A new instance of QApplication
 form = Browser()  # We set the form to be our Browser
